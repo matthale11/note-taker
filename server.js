@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const app = express();
+const uniqid = require("uniqid");
 
 // Create port with option for Heroku
 const PORT = process.env.PORT || 3000;
@@ -20,27 +21,42 @@ app.get("*", (req, res) =>
 
 // API route for retrieving notes from db.json
 app.get("/api/notes", (req, res) => {
-    fs.readFile("db/db.json", (err, data) => {
-        if (err) throw err;
-        res.json(JSON.parse(data))
-        });
+  fs.readFile("db/db.json", "utf8", (err, data) => {
+    if (err) throw err;
+    res.json(JSON.parse(data));
+  });
 });
 // API route for saving notes to db.json
 app.post("/api/notes", (req, res) => {
-    fs.writeFile("db/db.json", (err, data) => {
-        if (err) throw err;
-        res.json(JSON.stringify(data))
-        });
+  // get an array back from the db
+  fs.readFile("db/db.json", "utf8", (err, data) => {
+    if (err) throw err;
+    console.log(data)
+    res.json(JSON.parse(data));
+  });
+  // push new note into the existing array
+  // const existingNotes = data;
+  const newNote = req.body;
+  newNote.id = uniqid();
+  // existingNotes.push(newNote);
+  //
+  fs.writeFile("db/db.json", JSON.stringify(newNote), (err) => {
+    if (err) throw err;
+    res.sendStatus(200);
+  });
 });
 // API route deleting notes from db.json
 app.delete("/api/notes/:id", (req, res) => {
-  fs.readFile("db/db.json", (err, data) => {
+  fs.readFile("db/db.json", "utf8", (err, data) => {
+    if (err) throw err;
     const noteArray = JSON.parse(data);
     const idNumber = req.params.id;
-    const filterArray = noteArray.filter(note => note.id !== idNumber);
+    const filterArray = noteArray.filter((note) => note.id !== idNumber);
 
-    fs.writeFile("db/db.json", JSON.stringify(filterArray), "utf8");
-    res.sendStatus(200);
+    fs.writeFile("db/db.json", JSON.stringify(filterArray), (err) => {
+      if (err) throw err;
+      res.sendStatus(200);
+    });
   });
 });
 
