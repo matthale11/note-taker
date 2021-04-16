@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("/notes", (req, res) =>
   res.sendFile(path.join(__dirname, "public/notes.html"))
 );
-app.get("*", (req, res) =>
+app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public/index.html"))
 );
 
@@ -26,25 +26,24 @@ app.get("/api/notes", (req, res) => {
     res.json(JSON.parse(data));
   });
 });
+
 // API route for saving notes to db.json
 app.post("/api/notes", (req, res) => {
   // get an array back from the db
   fs.readFile("db/db.json", "utf8", (err, data) => {
     if (err) throw err;
-    console.log(data)
-    res.json(JSON.parse(data));
-  });
-  // push new note into the existing array
-  // const existingNotes = data;
-  const newNote = req.body;
-  newNote.id = uniqid();
-  // existingNotes.push(newNote);
-  //
-  fs.writeFile("db/db.json", JSON.stringify(newNote), (err) => {
-    if (err) throw err;
-    res.sendStatus(200);
+    const oldNotes = JSON.parse(data);
+    const newNote = req.body;
+    newNote.id = uniqid();
+    // add new note to the existing array
+    oldNotes.push(newNote);
+    fs.writeFile("db/db.json", JSON.stringify(oldNotes), (err) => {
+      if (err) throw err;
+      res.sendStatus(200);
+    });
   });
 });
+
 // API route deleting notes from db.json
 app.delete("/api/notes/:id", (req, res) => {
   fs.readFile("db/db.json", "utf8", (err, data) => {
